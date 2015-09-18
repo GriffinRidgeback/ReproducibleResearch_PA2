@@ -14,7 +14,7 @@ describes and summarizes your analysis in at most 10 complete sentences.
 # Data Processing
 
 
-storm.data <- read.csv(bzfile("./data/repdata_data_StormData.csv.bz2"))
+storm.data <- read.csv(bzfile("./data/repdata_data_StormData.csv.bz2"), stringsAsFactors = FALSE)
 
 str(storm.data)
 
