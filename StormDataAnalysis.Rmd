@@ -30,6 +30,8 @@ sort(unique(trimws(toupper(storm.data$EVTYPE))))
 You can plot fatalities/injuries
 you can plot two-panel across states
 
+x  <- storm.data %>% group_by(EVTYPE) %>% summarise(total_fatalities = sum(FATALITIES))
+x  <- storm.data %>% group_by(EVTYPE) %>% summarise(total_injuries = sum(INJURIES))
 
 Astronomical Low Tide
 Avalanche
