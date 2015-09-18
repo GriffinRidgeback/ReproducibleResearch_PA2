@@ -78,6 +78,125 @@ img {
 </div>
 <div id="data-processing" class="section level1">
 <h1>Data Processing</h1>
+<p>storm.data &lt;- read.csv(bzfile(“./data/repdata_data_StormData.csv.bz2”), stringsAsFactors = FALSE)</p>
+<p>str(storm.data)</p>
+<p>then use dplyr to select only columns of interest</p>
+<p>names(storm.data) unique(storm.data<span class="math">\(EVTYPE) table(toupper(storm.data\)</span>EVTYPE)) sort(unique(trimws(storm.data<span class="math">\(EVTYPE))) sort(unique(trimws(toupper(storm.data\)</span>EVTYPE))))</p>
+<ol start="0" style="list-style-type: decimal">
+<li>select only the columns that make sense for the analysis</li>
+<li>work with the EVTYPE column first</li>
+<li>remove the ? since there is no mapping for unknown types</li>
+<li>replace the column with trimmed, uppercase versions</li>
+</ol>
+<p>You can plot fatalities/injuries you can plot two-panel across states</p>
+<p>x &lt;- storm.data %&gt;% group_by(EVTYPE) %&gt;% summarise(total_fatalities = sum(FATALITIES)) x &lt;- storm.data %&gt;% group_by(EVTYPE) %&gt;% summarise(total_injuries = sum(INJURIES))</p>
+<p>Astronomical Low Tide Avalanche Blizzard Coastal Flood Cold/Wind Chill Debris Flow Dense Fog Dense Smoke Drought Dust Devil Dust Storm Excessive Heat Extreme Cold/Wind Chill Flash Flood Flood Frost/Freeze Funnel Cloud Freezing Fog Hail Heat Heavy Rain Heavy Snow High Surf High Wind</p>
+<p>Hurricane (Typhoon) Ice Storm Lake-Effect Snow Lakeshore Flood Lightning Marine Hail Marine High Wind Marine Strong Wind Marine Thunderstorm Wind Rip Current Seiche Sleet Storm Surge/Tide Strong Wind Thunderstorm Wind Tornado Tropical Depression Tropical Storm Tsunami Volcanic Ash Waterspout Wildfire Winter Storm Winter Weather</p>
+<pre class="r"><code>knitr::kable(head(mtcars), digits = 2, align = c(rep(&quot;l&quot;, 4), rep(&quot;c&quot;, 4), rep(&quot;r&quot;, 4)))</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="left">mpg</th>
+<th align="left">cyl</th>
+<th align="left">disp</th>
+<th align="left">hp</th>
+<th align="center">drat</th>
+<th align="center">wt</th>
+<th align="center">qsec</th>
+<th align="center">vs</th>
+<th align="right">am</th>
+<th align="right">gear</th>
+<th align="right">carb</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Mazda RX4</td>
+<td align="left">21.0</td>
+<td align="left">6</td>
+<td align="left">160</td>
+<td align="left">110</td>
+<td align="center">3.90</td>
+<td align="center">2.62</td>
+<td align="center">16.46</td>
+<td align="center">0</td>
+<td align="right">1</td>
+<td align="right">4</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">Mazda RX4 Wag</td>
+<td align="left">21.0</td>
+<td align="left">6</td>
+<td align="left">160</td>
+<td align="left">110</td>
+<td align="center">3.90</td>
+<td align="center">2.88</td>
+<td align="center">17.02</td>
+<td align="center">0</td>
+<td align="right">1</td>
+<td align="right">4</td>
+<td align="right">4</td>
+</tr>
+<tr class="odd">
+<td align="left">Datsun 710</td>
+<td align="left">22.8</td>
+<td align="left">4</td>
+<td align="left">108</td>
+<td align="left">93</td>
+<td align="center">3.85</td>
+<td align="center">2.32</td>
+<td align="center">18.61</td>
+<td align="center">1</td>
+<td align="right">1</td>
+<td align="right">4</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">Hornet 4 Drive</td>
+<td align="left">21.4</td>
+<td align="left">6</td>
+<td align="left">258</td>
+<td align="left">110</td>
+<td align="center">3.08</td>
+<td align="center">3.21</td>
+<td align="center">19.44</td>
+<td align="center">1</td>
+<td align="right">0</td>
+<td align="right">3</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">Hornet Sportabout</td>
+<td align="left">18.7</td>
+<td align="left">8</td>
+<td align="left">360</td>
+<td align="left">175</td>
+<td align="center">3.15</td>
+<td align="center">3.44</td>
+<td align="center">17.02</td>
+<td align="center">0</td>
+<td align="right">0</td>
+<td align="right">3</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">Valiant</td>
+<td align="left">18.1</td>
+<td align="left">6</td>
+<td align="left">225</td>
+<td align="left">105</td>
+<td align="center">2.76</td>
+<td align="center">3.46</td>
+<td align="center">20.22</td>
+<td align="center">1</td>
+<td align="right">0</td>
+<td align="right">3</td>
+<td align="right">1</td>
+</tr>
+</tbody>
+</table>
 <p>describes (in words and code) how the data were loaded into R and processed for analysis. In particular, your analysis must start from the raw CSV file containing the data. You cannot do any preprocessing outside the document. If preprocessing is time-consuming you may consider using the cache = TRUE option for certain code chunks.</p>
 <p>Does the analysis include description and justification for any data transformations?</p>
 <p>Your data analysis must address the following questions:</p>

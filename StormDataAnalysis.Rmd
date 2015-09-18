@@ -88,6 +88,9 @@ Wildfire
 Winter Storm
 Winter Weather
 
+```{r}
+knitr::kable(head(mtcars), digits = 2, align = c(rep("l", 4), rep("c", 4), rep("r", 4)))
+```
 
 
 
