@@ -15,7 +15,12 @@ describes and summarizes your analysis in at most 10 complete sentences.
 
 
 storm.data <- read.csv(bzfile("./data/repdata_data_StormData.csv.bz2"))
+
 str(storm.data)
+
+then use dplyr to select only columns of interest
+
+
 names(storm.data)
 unique(storm.data$EVTYPE)
 table(toupper(storm.data$EVTYPE))
