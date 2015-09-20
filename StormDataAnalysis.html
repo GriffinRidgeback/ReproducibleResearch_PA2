@@ -78,10 +78,40 @@ img {
 </div>
 <div id="data-processing" class="section level1">
 <h1>Data Processing</h1>
-<p>storm.data &lt;- read.csv(bzfile(“./data/repdata_data_StormData.csv.bz2”), stringsAsFactors = FALSE)</p>
-<p>str(storm.data)</p>
+<pre class="r"><code>stormData &lt;- read.csv(bzfile(&quot;./data/repdata_data_StormData.csv.bz2&quot;), stringsAsFactors = FALSE)</code></pre>
+<p>str(stormData)</p>
+<pre class="r"><code>suppressMessages(library(dplyr))
+library(&quot;dplyr&quot;)</code></pre>
+<p>Describe how you came up with the excluded columns</p>
 <p>then use dplyr to select only columns of interest</p>
-<p>names(storm.data) unique(storm.data<span class="math">\(EVTYPE) table(toupper(storm.data\)</span>EVTYPE)) sort(unique(trimws(storm.data<span class="math">\(EVTYPE))) sort(unique(trimws(toupper(storm.data\)</span>EVTYPE))))</p>
+<pre class="r"><code>stormData  &lt;- stormData  %&gt;% select(c(BGN_DATE, TIME_ZONE, COUNTY, COUNTYNAME, STATE, EVTYPE, FATALITIES, INJURIES, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP))</code></pre>
+<p>Since we are interested in events that caused fatalities and injuries, let’s filter out any that didn’t cause any: This is what you want, them map this to the NWS STUFF</p>
+<pre class="r"><code>stormData   &lt;- stormData  %&gt;% filter(PROPDMG != 0.00 &amp; CROPDMG != 0.00)
+stormData   &lt;- stormData  %&gt;% filter(FATALITIES != 0.00 &amp; INJURIES != 0.00)</code></pre>
+</div>
+<div id="do-this-after-the-filterin" class="section level1">
+<h1>DO THIS AFTER THE FILTERIN</h1>
+<p>stormData<span class="math">\(EVTYPE &lt;- toupper(trimws(stormData\)</span>EVTYPE))</p>
+<p>stormData &lt;- stormData %&gt;% filter(FATALITIES &gt; 0 &amp; INJURIES &gt; 0)</p>
+</div>
+<div id="sortuniquestormdataevtype-lengthsortuniquestormdataevtype" class="section level1">
+<h1>sort(unique(stormData<span class="math">\(EVTYPE)) #length(sort(unique(stormData\)</span>EVTYPE)))</h1>
+</div>
+<div id="this-gives-only-84-event-types-to-map-much-less-than-the-original-set-of-over-900" class="section level1">
+<h1>this gives only 84 event types to map, much less than the original set of over 900</h1>
+<p>summary(stormData<span class="math">\(FATALITIES) summary(stormData\)</span>INJURIES) stormData &lt;- stormData %&gt;% filter(FATALITIES &gt; 3 &amp; INJURIES &gt; 30)</p>
+<p>Now we can reduce the dataset futher, using the mean of the datat calculated</p>
+</div>
+<div id="stormdata---stormdata-filterevtype" class="section level1">
+<h1>stormData &lt;- stormData %&gt;% filter(EVTYPE != “?”)</h1>
+</div>
+<div id="q---filterstormdata-greplsummary-stormdataevtype-ignore.case-t" class="section level1">
+<h1>q &lt;- filter(stormData, !grepl(“summary”, stormData$EVTYPE, ignore.case = T))</h1>
+</div>
+<div id="reduces-the-number-of-unique-evtype-values-to-822" class="section level1">
+<h1>Reduces the number of unique EVTYPE values to 822</h1>
+<p>q &lt;- filter(stormData, !grepl(“astronomical high tide”, stormData$EVTYPE, ignore.case = T)) reduces the number of unique EVTYPE values to 821</p>
+<p>What does this tell you?</p>
 <ol start="0" style="list-style-type: decimal">
 <li>select only the columns that make sense for the analysis</li>
 <li>work with the EVTYPE column first</li>
@@ -90,8 +120,28 @@ img {
 </ol>
 <p>You can plot fatalities/injuries you can plot two-panel across states</p>
 <p>x &lt;- storm.data %&gt;% group_by(EVTYPE) %&gt;% summarise(total_fatalities = sum(FATALITIES)) x &lt;- storm.data %&gt;% group_by(EVTYPE) %&gt;% summarise(total_injuries = sum(INJURIES))</p>
-<p>Astronomical Low Tide Avalanche Blizzard Coastal Flood Cold/Wind Chill Debris Flow Dense Fog Dense Smoke Drought Dust Devil Dust Storm Excessive Heat Extreme Cold/Wind Chill Flash Flood Flood Frost/Freeze Funnel Cloud Freezing Fog Hail Heat Heavy Rain Heavy Snow High Surf High Wind</p>
-<p>Hurricane (Typhoon) Ice Storm Lake-Effect Snow Lakeshore Flood Lightning Marine Hail Marine High Wind Marine Strong Wind Marine Thunderstorm Wind Rip Current Seiche Sleet Storm Surge/Tide Strong Wind Thunderstorm Wind Tornado Tropical Depression Tropical Storm Tsunami Volcanic Ash Waterspout Wildfire Winter Storm Winter Weather</p>
+</div>
+<div id="no-data-for-this" class="section level1">
+<h1>no data for this</h1>
+<p>Astronomical Low Tide</p>
+</div>
+<div id="data-for-this" class="section level1">
+<h1>data for this</h1>
+<p>Avalanche Blizzard</p>
+<p>Coastal Flood coastal &lt;- grepl(“coastal”, stormData<span class="math">\(EVTYPE, ignore.case = T) stormData\)</span>EVTYPE[coastal] &lt;- “COASTAL FLOOD”</p>
+<p>Cold/Wind Chill Debris Flow Dense Fog Dense Smoke Drought Dust Devil Dust Storm Excessive Heat</p>
+</div>
+<div id="combine-records-with-extreme-under-this" class="section level1">
+<h1>Combine records with extreme under this</h1>
+<p>Extreme Cold/Wind Chill extreme &lt;- grepl(“extreme”, stormData<span class="math">\(EVTYPE, ignore.case = T) stormData\)</span>EVTYPE[extreme] &lt;- “Extreme Cold/Wind Chill”</p>
+<p>Flash Flood Flood Frost/Freeze Funnel Cloud Freezing Fog Hail</p>
+<p>hail &lt;- grepl(“hail”, stormData<span class="math">\(EVTYPE, ignore.case = T) stormData\)</span>EVTYPE[hail] &lt;- “HAIL”</p>
+<p>Heat Heavy Rain Heavy Snow High Surf High Wind</p>
+<p>Hurricane (Typhoon) Ice Storm Lake-Effect Snow Lakeshore Flood Lightning Marine Hail Marine High Wind Marine Strong Wind Marine Thunderstorm Wind Rip Current</p>
+<p>Seiche nothing to do</p>
+<p>Sleet Storm Surge/Tide Strong Wind</p>
+<p>Thunderstorm Wind thunder &lt;- grepl(“thu.<em>s.</em>”, stormData<span class="math">\(EVTYPE, ignore.case = T) stormData\)</span>EVTYPE[thunder] &lt;- “THUNDERSTORM WIND”</p>
+<p>Tornado Tropical Depression Tropical Storm Tsunami Volcanic Ash Waterspout Wildfire Winter Storm Winter Weather</p>
 <pre class="r"><code>knitr::kable(head(mtcars), digits = 2, align = c(rep(&quot;l&quot;, 4), rep(&quot;c&quot;, 4), rep(&quot;r&quot;, 4)))</code></pre>
 <table>
 <thead>

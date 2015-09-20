@@ -5,6 +5,10 @@ date: "09/18/2015"
 output: html_document
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
 # Title
 Your document should have a title that briefly summarizes your data analysis
 
@@ -13,19 +17,120 @@ describes and summarizes your analysis in at most 10 complete sentences.
 
 # Data Processing
 
+```{r load_data}
+stormData <- read.csv(bzfile("./data/repdata_data_StormData.csv.bz2"), stringsAsFactors = FALSE)
 
-storm.data <- read.csv(bzfile("./data/repdata_data_StormData.csv.bz2"), stringsAsFactors = FALSE)
+```
 
-str(storm.data)
+
+str(stormData)
+
+
+```{r load_dplyr}
+suppressMessages(library(dplyr))
+library("dplyr")
+```
+Describe how you came up with the excluded columns
 
 then use dplyr to select only columns of interest
 
+```{r select_columns}
+stormData  <- stormData  %>% select(c(EVTYPE, FATALITIES, INJURIES, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP))
+```
 
-names(storm.data)
-unique(storm.data$EVTYPE)
-table(toupper(storm.data$EVTYPE))
-sort(unique(trimws(storm.data$EVTYPE)))
-sort(unique(trimws(toupper(storm.data$EVTYPE))))
+Since we are interested in events that caused fatalities and injuries, let's filter out any that didn't cause any:
+This is what you want, them map this to the NWS STUFF
+
+```{r filter_data_for_population}
+populationData <-   stormData  %>% 
+                    select(c(EVTYPE, FATALITIES, INJURIES)) %>% 
+                    filter(FATALITIES > 0.00 & INJURIES > 0.00)
+```
+
+```{r filter_data_for_economics}
+economicData <-   stormData  %>% 
+                  select(c(EVTYPE, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP)) %>% 
+                  filter(PROPDMG > 0.00 & CROPDMG > 0.00)
+
+```
+
+Can the datasets be reduced further?  Use summary to look at mean data for each group
+
+```{r run_summary_statistics}
+summary(populationData$FATALITIES)
+summary(populationData$INJURIES)
+summary(economicData$PROPDMG)
+summary(economicData$CROPDMG)
+```
+
+
+populationData  <- populationData  %>% filter(FATALITIES >= 2 & INJURIES >= 20)
+economicData  <- economicData  %>% filter(PROPDMG >= 50 & CROPDMG >= 50)
+
+
+
+
+cold  <- grepl("cold", populationData$EVTYPE, ignore.case = T)
+populationData$EVTYPE[cold]  <- "Cold/Wind Chill"
+rain  <- grepl("rain", populationData$EVTYPE, ignore.case = T)
+populationData$EVTYPE[rain]  <- "Heavy Rain"
+fog  <- grepl("fog", populationData$EVTYPE, ignore.case = T)
+populationData$EVTYPE[fog]  <- "Dense Fog"
+heat  <- grepl("heat wave", populationData$EVTYPE, ignore.case = T)
+populationData$EVTYPE[heat]  <- "Excessive Heat"
+
+wind  <- grepl("high wind", populationData$EVTYPE, ignore.case = T)
+populationData$EVTYPE[wind]  <- "High Wind"
+tropical  <- grepl("tropical storm", populationData$EVTYPE, ignore.case = T)
+populationData$EVTYPE[tropical]  <- "Tropical Storm"
+
+thunder  <- grepl("tstm", populationData$EVTYPE, ignore.case = T)
+populationData$EVTYPE[thunder]  <- "THUNDERSTORM WIND"
+stream  <- grepl("urban", populationData$EVTYPE, ignore.case = T)
+populationData$EVTYPE[stream]  <- "Flash Flood"
+
+
+fire  <- grepl("fire", populationData$EVTYPE, ignore.case = T)
+populationData$EVTYPE[fire]  <- "Wildfire"
+
+hurricane  <- grepl("hurricane", populationData$EVTYPE, ignore.case = T)
+populationData$EVTYPE[hurricane]  <- "Hurricane (Typhoon)"
+
+spout  <- grepl("waterspout", populationData$EVTYPE, ignore.case = T)
+populationData$EVTYPE[spout]  <- "Waterspout"
+
+populationData$EVTYPE  <- toupper(trimws(populationData$EVTYPE))
+populationData$EVTYPE  <- as.factor(populationData$EVTYPE)
+
+
+# DO THIS AFTER THE FILTERIN
+#stormData$EVTYPE  <- toupper(trimws(stormData$EVTYPE))
+
+
+This leaves `r length(sort(unique(stormData$EVTYPE)))` event types from our source data that need to be mapped to one of the 48 event types defined by the NWS.  Here are the event types:
+
+```{r}
+sort(unique(stormData$EVTYPE))
+```
+
+
+
+stormData  <- stormData  %>% filter(FATALITIES > 3 & INJURIES > 30)
+
+Now we can reduce the dataset futher, using the mean of the datat calculated
+
+
+#stormData  <- stormData  %>% filter(EVTYPE != "?")
+#q  <- filter(stormData, !grepl("summary", stormData$EVTYPE, ignore.case = T))
+#Reduces the number of unique EVTYPE values to 822
+
+q  <- filter(stormData, !grepl("astronomical high tide", stormData$EVTYPE, ignore.case = T))
+reduces the number of unique EVTYPE values to 821
+
+
+
+
+What does this tell you?
 
 0. select only the columns that make sense for the analysis
 1. work with the EVTYPE column first
@@ -38,10 +143,20 @@ you can plot two-panel across states
 x  <- storm.data %>% group_by(EVTYPE) %>% summarise(total_fatalities = sum(FATALITIES))
 x  <- storm.data %>% group_by(EVTYPE) %>% summarise(total_injuries = sum(INJURIES))
 
+
+
+
+# no data for this
 Astronomical Low Tide
+
+# data for this
 Avalanche
 Blizzard
+
 Coastal Flood
+coastal  <- grepl("coastal", stormData$EVTYPE, ignore.case = T)
+stormData$EVTYPE[coastal]  <- "COASTAL FLOOD"
+
 Cold/Wind Chill
 Debris Flow
 Dense Fog
@@ -50,13 +165,23 @@ Drought
 Dust Devil
 Dust Storm
 Excessive Heat
+
+# Combine records with extreme under this
 Extreme Cold/Wind Chill
+extreme  <- grepl("extreme", stormData$EVTYPE, ignore.case = T)
+stormData$EVTYPE[extreme]  <- "Extreme Cold/Wind Chill"
+
+
 Flash Flood
 Flood
 Frost/Freeze
 Funnel Cloud
 Freezing Fog
 Hail
+
+hail  <- grepl("hail", stormData$EVTYPE, ignore.case = T)
+stormData$EVTYPE[hail]  <- "HAIL"
+
 Heat
 Heavy Rain
 Heavy Snow
@@ -73,11 +198,21 @@ Marine High Wind
 Marine Strong Wind
 Marine Thunderstorm Wind
 Rip Current
+
 Seiche
+nothing to do
+
 Sleet
 Storm Surge/Tide
 Strong Wind
+
+This link will give the definition for TSTM, i.e., thunderstorm
+http://forecast.weather.gov/glossary.php?word=tstm
+
 Thunderstorm Wind
+thunder  <- grepl("thu.*s.*", stormData$EVTYPE, ignore.case = T)
+stormData$EVTYPE[thunder]  <- "THUNDERSTORM WIND"
+
 Tornado
 Tropical Depression
 Tropical Storm
