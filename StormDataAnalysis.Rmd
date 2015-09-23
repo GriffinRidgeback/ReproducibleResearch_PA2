@@ -2,7 +2,9 @@
 title: "Reproducible Research - Peer Assessment 2"
 author: "Kevin E. D'Elia"
 date: "09/18/2015"
-output: html_document
+output: 
+  html_document:
+    keep_md: true
 ---
 
 ```{r setup, include=FALSE}
@@ -17,13 +19,16 @@ describes and summarizes your analysis in at most 10 complete sentences.
 
 # Data Processing
 
-```{r load_data}
+```{r load_data, cache=TRUE}
 stormData <- read.csv(bzfile("./data/repdata_data_StormData.csv.bz2"), stringsAsFactors = FALSE)
 
 ```
 
 
+```{r}
 str(stormData)
+
+```
 
 
 ```{r load_dplyr}
@@ -47,6 +52,8 @@ populationData <-   stormData  %>%
                     filter(FATALITIES > 0.00 & INJURIES > 0.00)
 ```
 
+While we are at it, let's also create a data frame with information just about property and crop damage.
+
 ```{r filter_data_for_economics}
 economicData <-   stormData  %>% 
                   select(c(EVTYPE, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP)) %>% 
@@ -64,31 +71,40 @@ summary(economicData$CROPDMG)
 ```
 
 
+```{r}
 populationData  <- populationData  %>% filter(FATALITIES >= 2 & INJURIES >= 20)
 economicData  <- economicData  %>% filter(PROPDMG >= 50 & CROPDMG >= 50)
 
+```
 
 
+
+Now map names from the 48 Event Types defined by the NWS to our remaining data
+```{r}
 
 cold  <- grepl("cold", populationData$EVTYPE, ignore.case = T)
 populationData$EVTYPE[cold]  <- "Cold/Wind Chill"
+
 rain  <- grepl("rain", populationData$EVTYPE, ignore.case = T)
 populationData$EVTYPE[rain]  <- "Heavy Rain"
+
 fog  <- grepl("fog", populationData$EVTYPE, ignore.case = T)
 populationData$EVTYPE[fog]  <- "Dense Fog"
+
 heat  <- grepl("heat wave", populationData$EVTYPE, ignore.case = T)
 populationData$EVTYPE[heat]  <- "Excessive Heat"
 
 wind  <- grepl("high wind", populationData$EVTYPE, ignore.case = T)
 populationData$EVTYPE[wind]  <- "High Wind"
+
 tropical  <- grepl("tropical storm", populationData$EVTYPE, ignore.case = T)
 populationData$EVTYPE[tropical]  <- "Tropical Storm"
 
 thunder  <- grepl("tstm", populationData$EVTYPE, ignore.case = T)
 populationData$EVTYPE[thunder]  <- "THUNDERSTORM WIND"
+
 stream  <- grepl("urban", populationData$EVTYPE, ignore.case = T)
 populationData$EVTYPE[stream]  <- "Flash Flood"
-
 
 fire  <- grepl("fire", populationData$EVTYPE, ignore.case = T)
 populationData$EVTYPE[fire]  <- "Wildfire"
@@ -99,43 +115,31 @@ populationData$EVTYPE[hurricane]  <- "Hurricane (Typhoon)"
 spout  <- grepl("waterspout", populationData$EVTYPE, ignore.case = T)
 populationData$EVTYPE[spout]  <- "Waterspout"
 
+```
+
+```{r clean_factorize}
+
+
 populationData$EVTYPE  <- toupper(trimws(populationData$EVTYPE))
 populationData$EVTYPE  <- as.factor(populationData$EVTYPE)
-
-
-# DO THIS AFTER THE FILTERIN
-#stormData$EVTYPE  <- toupper(trimws(stormData$EVTYPE))
-
-
-This leaves `r length(sort(unique(stormData$EVTYPE)))` event types from our source data that need to be mapped to one of the 48 event types defined by the NWS.  Here are the event types:
-
-```{r}
-sort(unique(stormData$EVTYPE))
 ```
 
 
+```{r summarize_data}
+y <- populationData  %>% group_by(EVTYPE) %>% summarise(fatalities = sum(FATALITIES), injuries = sum(INJURIES))
 
-stormData  <- stormData  %>% filter(FATALITIES > 3 & INJURIES > 30)
-
-Now we can reduce the dataset futher, using the mean of the datat calculated
-
-
-#stormData  <- stormData  %>% filter(EVTYPE != "?")
-#q  <- filter(stormData, !grepl("summary", stormData$EVTYPE, ignore.case = T))
-#Reduces the number of unique EVTYPE values to 822
-
-q  <- filter(stormData, !grepl("astronomical high tide", stormData$EVTYPE, ignore.case = T))
-reduces the number of unique EVTYPE values to 821
+```
 
 
+```{r plot_population, fig.scap="Fatalities/Injuries per Event Type", fig.path="./figures/"}
+plot(y$fatalities, type="l", col="blue", axes=F, ann=T, xlab="Event Types", ylab="Totals", cex.lab=0.8, lwd=2, ylim=c(0, 4000))
+axis(1, at=1:20, labels = F)
+axis(2, las=1, cex.axis=0.8)
+ text(1:20, par("usr")[3] - 2, srt=45, adj=1, labels=y$EVTYPE, xpd=T, cex=0.6)
+lines(y$injuries, col="green", lwd=2)
+box()
 
-
-What does this tell you?
-
-0. select only the columns that make sense for the analysis
-1. work with the EVTYPE column first
-2. remove the ? since there is no mapping for unknown types
-3. replace the column with trimmed, uppercase versions
+```
 
 You can plot fatalities/injuries
 you can plot two-panel across states
@@ -144,6 +148,32 @@ x  <- storm.data %>% group_by(EVTYPE) %>% summarise(total_fatalities = sum(FATAL
 x  <- storm.data %>% group_by(EVTYPE) %>% summarise(total_injuries = sum(INJURIES))
 
 
+```{r economic_analysis}
+
+dust  <- grepl("dust", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[dust] <- "Dust Storm"
+
+
+
+hurricane <- grepl("hurricane", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[hurricane] <- "Hurricane (Typhoon)"
+thunder <- grepl("thu.*s.*", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[thunder] <- "Thunderstorm Wind"
+
+tstm <- grepl("tstm", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[tstm] <- "Thunderstorm Wind"
+
+tropical <- grepl("tropical", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[tropical] <- "Tropical Storm"
+
+
+wildfire <- grepl("wildfire", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[wildfire] <- "Wildfire"
+
+winter  <- grepl("winter", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[winter] <- "Winter Storm"
+
+```
 
 
 # no data for this
