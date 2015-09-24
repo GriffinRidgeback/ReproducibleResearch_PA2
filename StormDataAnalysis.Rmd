@@ -148,15 +148,41 @@ x  <- storm.data %>% group_by(EVTYPE) %>% summarise(total_fatalities = sum(FATAL
 x  <- storm.data %>% group_by(EVTYPE) %>% summarise(total_injuries = sum(INJURIES))
 
 
-```{r economic_analysis}
+```{r map_economic_data}
 
 dust  <- grepl("dust", economicData$EVTYPE, ignore.case = T)
 economicData$EVTYPE[dust] <- "Dust Storm"
 
+cold <- grepl("extreme cold", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[cold] <- "Extreme Cold/Wind Chill"
 
+flash <- grepl("flash", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[flash] <- "Flash Flood"
+
+FLOOD <- grepl("FL.*D", economicData$EVTYPE, ignore.case = F)
+economicData$EVTYPE[FLOOD] <- "Flood"
+
+freeze <- grepl("freeze", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[freeze] <- "Frost/Freeze"
+
+gust <- grepl("gusty", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[gust] <- "High Wind"
+
+hail <- grepl("hail", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[hail] <- "Hail"
+
+heat <- grepl("heat", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[heat] <- "Heat"
+
+storm <- grepl("typhoon", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[storm] <- "Tropical Storm"
+
+rain <- grepl("rain", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[rain] <- "Heavy Rain"
 
 hurricane <- grepl("hurricane", economicData$EVTYPE, ignore.case = T)
 economicData$EVTYPE[hurricane] <- "Hurricane (Typhoon)"
+
 thunder <- grepl("thu.*s.*", economicData$EVTYPE, ignore.case = T)
 economicData$EVTYPE[thunder] <- "Thunderstorm Wind"
 
@@ -166,92 +192,29 @@ economicData$EVTYPE[tstm] <- "Thunderstorm Wind"
 tropical <- grepl("tropical", economicData$EVTYPE, ignore.case = T)
 economicData$EVTYPE[tropical] <- "Tropical Storm"
 
-
 wildfire <- grepl("wildfire", economicData$EVTYPE, ignore.case = T)
 economicData$EVTYPE[wildfire] <- "Wildfire"
 
+forest <- grepl("forest", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[forest] <- "Wildfire"
+
 winter  <- grepl("winter", economicData$EVTYPE, ignore.case = T)
 economicData$EVTYPE[winter] <- "Winter Storm"
-
 ```
 
 
-# no data for this
-Astronomical Low Tide
+economicData$EVTYPE <- toupper(trimws(economicData$EVTYPE))
+economicData$EVTYPE  <- as.factor(economicData$EVTYPE)
 
-# data for this
-Avalanche
-Blizzard
+unique(economicData$PROPDMGEXP)
+unique(economicData$CROPDMGEXP)
 
-Coastal Flood
-coastal  <- grepl("coastal", stormData$EVTYPE, ignore.case = T)
-stormData$EVTYPE[coastal]  <- "COASTAL FLOOD"
+economicData <- economicData %>% filter(CROPDMGEXP != 0)
+economicData$CROPDMGEXP <- toupper(economicData$CROPDMGEXP)
 
-Cold/Wind Chill
-Debris Flow
-Dense Fog
-Dense Smoke
-Drought
-Dust Devil
-Dust Storm
-Excessive Heat
-
-# Combine records with extreme under this
-Extreme Cold/Wind Chill
-extreme  <- grepl("extreme", stormData$EVTYPE, ignore.case = T)
-stormData$EVTYPE[extreme]  <- "Extreme Cold/Wind Chill"
-
-
-Flash Flood
-Flood
-Frost/Freeze
-Funnel Cloud
-Freezing Fog
-Hail
-
-hail  <- grepl("hail", stormData$EVTYPE, ignore.case = T)
-stormData$EVTYPE[hail]  <- "HAIL"
-
-Heat
-Heavy Rain
-Heavy Snow
-High Surf
-High Wind
-
-Hurricane (Typhoon)
-Ice Storm
-Lake-Effect Snow
-Lakeshore Flood
-Lightning
-Marine Hail
-Marine High Wind
-Marine Strong Wind
-Marine Thunderstorm Wind
-Rip Current
-
-Seiche
-nothing to do
-
-Sleet
-Storm Surge/Tide
-Strong Wind
 
 This link will give the definition for TSTM, i.e., thunderstorm
 http://forecast.weather.gov/glossary.php?word=tstm
-
-Thunderstorm Wind
-thunder  <- grepl("thu.*s.*", stormData$EVTYPE, ignore.case = T)
-stormData$EVTYPE[thunder]  <- "THUNDERSTORM WIND"
-
-Tornado
-Tropical Depression
-Tropical Storm
-Tsunami
-Volcanic Ash
-Waterspout
-Wildfire
-Winter Storm
-Winter Weather
 
 ```{r}
 knitr::kable(head(mtcars), digits = 2, align = c(rep("l", 4), rep("c", 4), rep("r", 4)))

@@ -216,6 +216,31 @@ x  <- storm.data %>% group_by(EVTYPE) %>% summarise(total_injuries = sum(INJURIE
 
 
 
+```r
+dust  <- grepl("dust", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[dust] <- "Dust Storm"
+
+
+
+hurricane <- grepl("hurricane", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[hurricane] <- "Hurricane (Typhoon)"
+thunder <- grepl("thu.*s.*", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[thunder] <- "Thunderstorm Wind"
+
+tstm <- grepl("tstm", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[tstm] <- "Thunderstorm Wind"
+
+tropical <- grepl("tropical", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[tropical] <- "Tropical Storm"
+
+
+wildfire <- grepl("wildfire", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[wildfire] <- "Wildfire"
+
+winter  <- grepl("winter", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[winter] <- "Winter Storm"
+```
+
 
 # no data for this
 Astronomical Low Tide
