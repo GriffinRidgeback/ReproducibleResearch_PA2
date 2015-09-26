@@ -205,6 +205,34 @@ economicData$PROPDMGCOST <-
 ```
 
 ```{r calculate_crop_damage_costs}
+economicData$CROPDMGCOST <- 
+  ifelse(economicData$CROPDMGEXP == "K", 
+         economicData$CROPDMG * 1.0e+03, 
+         economicData$CROPDMG * 1.0e+06)
+```
+
+
+```{r create_factors}
+economicData$PROPDMGEXP <- as.factor(economicData$PROPDMGEXP)
+economicData$CROPDMGEXP <- as.factor(economicData$CROPDMGEXP)
+```
+
+We no longer need the reduced numerical data so let's reduce the dataset a bit further.
+```{r clean_up}
+economicData <- economicData %>% select(-c(PROPDMG, CROPDMG))
+```
+
+Further sub-divide the economic data into property and crop damage datasets
+```{r sub_divide}
+propertyDamage <- economicData %>% select(EVTYPE, PROPDMGEXP, PROPDMGCOST)
+cropDamage <- economicData %>% select(EVTYPE, CROPDMGEXP, CROPDMGCOST)
+```
+```{r calculate_costs}
+A <- propertyDamage %>% group_by(EVTYPE, PROPDMGEXP) %>% summarise(costs = sum(PROPDMGCOST))
+split(A, A$PROPDMGEXP)
+r <- A %>% group_by(EVTYPE) %>% summarise(total_costs = sum(costs)/1.0e+06)
+par(mar = rep(2, 4))
+plot(r$EVTYPE, r$total_costs)
 
 ```
 
