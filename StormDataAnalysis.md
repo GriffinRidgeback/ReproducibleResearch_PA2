@@ -179,7 +179,24 @@ Again, it appears that the dataset can be further reduced by using the values fo
 economicData  <- economicData  %>% filter(PROPDMG >= 50 & CROPDMG >= 50)
 ```
 
-The next step in the processing is to reverse-map the 48 Event Types defined by the National Weather Service (NWS) to the entries in our datasets.  The complete list can be found in the link to the National Weather Service Storm Data Documentation given above.  Some of the existing `EVTYPE` values are 1::1 with the NWS types but for those which are not, the following process will normalize them.  First, for the population data:
+The next step in the processing is to reverse-map the 48 Event Types defined by the National Weather Service (NWS) to the entries in our datasets.  The complete list can be found in the link to the National Weather Service Storm Data Documentation given above and is reproduced here for completeness.  
+
+Event Type            | Event Type             | Event Type              | Event Type
+----------------------|------------------------|-------------------------|-----------
+Astronomical Low Tide |Extreme Cold/Wind Chill |Hurricane (Typhoon)      |Storm Surge/Tide
+Avalanche             |Flash Flood             |Ice Storm                |Strong Wind
+Blizzard              |Flood                   |Lake-Effect Snow         |Thunderstorm Wind
+Coastal Flood         |Frost/Freeze            |Lakeshore Flood          |Tornado
+Cold/Wind Chill       |Funnel Cloud            |Lightning                |Tropical Depression
+Debris Flow           |Freezing Fog            |Marine Hail              |Tropical Storm
+Dense Fog             |Hail                    |Marine High Wind         |Tsunami
+Dense Smoke           |Heat                    |Marine Strong Wind       |Volcanic Ash
+Drought               |Heavy Rain              |Marine Thunderstorm Wind |Waterspout 
+Dust Devil            |Heavy Snow              |Rip Current              |Wildfire
+Dust Storm            |High Surf               |Seiche                   |Winter Storm
+Excessive Heat        |High Wind               |Sleet                    |Winter Weather
+
+Some of the existing `EVTYPE` values are 1::1 with the NWS types but for those which are not, the following process will normalize them.  First, for the population data:
 
 **Note**: This [link](http://forecast.weather.gov/glossary.php?word=tstm) will give the definition for **TSTM**, i.e., thunderstorm, as justification for changing any `EVTYPE` entries with that value to one of Thunderstorm.
 
@@ -275,7 +292,8 @@ winter  <- grepl("winter", economicData$EVTYPE, ignore.case = T)
 economicData$EVTYPE[winter] <- "Winter Storm"
 ```
 
-A little more cleanup:  
+A little more cleanup:
+
 1. make the `EVTYPE` values all free of extraneous whitespace and in upper case
 2. make `EVTYPE` a factor variable now so its values can be used in later graphs
 
@@ -319,43 +337,17 @@ Now we can start summarizing the data and arriving at some results.
 
 # Results
 
+Once the data has been processed into a format suitable for analysis, we can summarize the totals for fatalities and injuries based on each distinct `EVTYPE`.
 
 
 ```r
-populationTotals <- populationData  %>% group_by(EVTYPE) %>% summarise(fatalities = sum(FATALITIES), injuries = sum(INJURIES))
+populationTotals <- populationData %>% 
+                    group_by(EVTYPE) %>% 
+                    summarise(fatalities = sum(FATALITIES), injuries = sum(INJURIES))
 ```
 
+Now show the plot for this data:
 
-```r
-knitr::kable(populationTotals, digits = 2, align = c(rep("l", 4), rep("c", 4), rep("r", 4)))
-```
-
-
-
-EVTYPE                fatalities   injuries 
---------------------  -----------  ---------
-BLIZZARD              12           630      
-COLD/WIND CHILL       8            179      
-DENSE FOG             12           176      
-DUST STORM            10           20       
-EXCESSIVE HEAT        309          4120     
-FLASH FLOOD           42           405      
-FLOOD                 27           2470     
-HEAT                  62           1375     
-HEAVY RAIN            2            21       
-HEAVY SNOW            2            20       
-HIGH WIND             18           104      
-HURRICANE (TYPHOON)   22           884      
-ICE STORM             3            50       
-THUNDERSTORM WIND     9            88       
-TORNADO               3692         48797    
-TROPICAL STORM        10           108      
-TSUNAMI               32           129      
-WATERSPOUT            3            39       
-WILDFIRE              25           301      
-WINTER STORM          10           275      
-
-Now show the plot for this data
 
 ```r
 plot(populationTotals$fatalities, 
@@ -365,8 +357,7 @@ plot(populationTotals$fatalities,
      ann=T, 
      xlab="", 
      ylab="Totals", 
-     cex.lab=0.8, 
-     lwd=2, 
+     lwd=2,
      ylim=c(0, 5000))
 axis(1, 
      at=1:20, 
@@ -382,19 +373,26 @@ text(1:20,
      xpd=T, 
      cex=0.7)
 lines(populationTotals$injuries, 
-      col="green", 
-      lwd=2,
-      pch=22)
+      col="orange", 
+      lwd=2)
+points(populationTotals$fatalities, pch=18, cex=0.8)
+points(populationTotals$injuries, pch=20, cex=0.8)
 legend("topright", 
       c("fatalities","injuries"), 
       cex=0.8, 
-      col=c("blue","green"), 
-      pch=21:22, 
-      lty=1:2)
+      col=c("blue","orange"), 
+      lty=1,
+      pch=c(18, 20))
 box()
 ```
 
-![](./figures/plot_population-1.png) 
+![Figure 1: Summary of fatalities and injuries by Event Type](./figures/plot_population-1.png) 
+
+******
+
+From the table and the graphic, it is clear that Tornadoes are the primary cause of fatalities and injuries, followed by Excessive Heat, respectively.
+
+Now we examine the question of which event cost the most in terms of property and crop damage.  To do that, we use the multiplier associated with each indicator.  For property, we do this:
 
 
 ```r
@@ -403,6 +401,8 @@ economicData$PROPDMGCOST <-
          economicData$PROPDMG * 1.0e+03, 
          economicData$PROPDMG * 1.0e+06)
 ```
+
+For crop damage, we calculate it this way:
 
 
 ```r
@@ -415,12 +415,15 @@ economicData$CROPDMGCOST <-
 We need only the `EVTYPE` and calculated columns now, so select only those:
 
 ```r
-economicData <- economicData %>% select(c(EVTYPE, PROPDMGCOST, CROPDMGCOST))
+economicData <- economicData %>% 
+                select(c(EVTYPE, PROPDMGCOST, CROPDMGCOST))
 ```
 
 
 ```r
-economicCosts <- economicData %>% group_by(EVTYPE) %>% summarise(propertyCosts = sum(PROPDMGCOST), cropCosts = sum(CROPDMGCOST))
+economicCosts <-  economicData %>% 
+                  group_by(EVTYPE) %>% 
+                  summarise(propertyCosts = sum(PROPDMGCOST), cropCosts = sum(CROPDMGCOST))
 ```
 
 
@@ -431,52 +434,54 @@ plot(economicCosts$propertyCosts,
      axes=F, 
      ann=T, 
      xlab="", 
-     ylab="Totals", 
-     cex.lab=0.8, 
+     ylab="Total Cost Property Damage (US Dollars)", 
+     cex.lab=0.6, 
      lwd=2)
 axis(1, 
-     at=1:20, 
+     at=1:nrow(economicCosts), 
      labels = F)
 axis(2, 
      las=1, 
      cex.axis=0.8)
-text(1:20, 
+text(1:nrow(economicCosts), 
      par("usr")[3] - 2, 
      srt=45, 
      adj=1, 
      labels=economicCosts$EVTYPE, 
      xpd=T, 
      cex=0.7)
+points(economicCosts$propertyCosts, pch=18)
 box()
 ```
 
-![](./figures/plot_property_costs-1.png) 
+![Figure 2: Property Damage Costs by Event Type](./figures/plot_property_costs-1.png) 
 
 
 ```r
 plot(economicCosts$cropCosts, 
      type="l", 
-     col="blue", 
+     col="orange", 
      axes=F, 
      ann=T, 
      xlab="", 
-     ylab="Totals", 
-     cex.lab=0.8, 
+     ylab="Total Cost Crop Damage (US Dollars)", 
+     cex.lab=0.6, 
      lwd=2)
 axis(1, 
-     at=1:20, 
+     at=1:nrow(economicCosts), 
      labels = F)
 axis(2, 
      las=1, 
      cex.axis=0.8)
-text(1:20, 
+text(1:nrow(economicCosts), 
      par("usr")[3] - 2, 
      srt=45, 
      adj=1, 
      labels=economicCosts$EVTYPE, 
      xpd=T, 
      cex=0.7)
+points(economicCosts$cropCosts, pch=18)
 box()
 ```
 
-![](./figures/plot_crop_costs-1.png) 
+![Figure 3: Crop Damage Costs by Event Type](./figures/plot_crop_costs-1.png) 
