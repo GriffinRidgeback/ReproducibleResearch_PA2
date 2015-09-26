@@ -4,19 +4,40 @@ Kevin E. D'Elia
 
 
 
-# Title
-Your document should have a title that briefly summarizes your data analysis
+# Analysis of NOAA Storm Database
+Access, data-wrangle, and provide data visualization of key variables contained in the NOAA Storm Database.
 
-# Synopsis
-describes and summarizes your analysis in at most 10 complete sentences.
+
+# Synopsis of Analysis
+The basic goal of this assignment is to explore the NOAA Storm Database and answer some basic questions about severe weather events. [NEED MORE WORDS HERE!!!]
+
+Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. Many severe events can result in fatalities, injuries, and property damage, and preventing such outcomes to the extent possible is a key concern.
+
+This project involves exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database tracks characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage.
+Data
+
 
 # Data Processing
+
+The data for this assignment come in the form of a comma-separated-value file compressed via the bzip2 algorithm to reduce its size. You can download the file from this link:
+[Storm Data](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2)
+
+There is also some documentation of the database available. Here you will find how some of the variables are constructed/defined.
+
+[National Weather Service Storm Data Documentation](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf)
+
+[National Climatic Data Center Storm Events FAQ](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2FNCDC%20Storm%20Events-FAQ%20Page.pdf)
+
+The events in the database start in the year 1950 and end in November 2011. In the earlier years of the database there are generally fewer events recorded, most likely due to a lack of good records. More recent years should be considered more complete.
+
+Once the data file has been downloaded, it can be loaded into **R** using the following function call:
 
 
 ```r
 stormData <- read.csv(bzfile("./data/repdata_data_StormData.csv.bz2"), stringsAsFactors = FALSE)
 ```
 
+A quick display of the dataframe's variables will help in subsequent selection and filtering approaches:
 
 
 ```r
@@ -64,23 +85,27 @@ str(stormData)
 ##  $ REFNUM    : num  1 2 3 4 5 6 7 8 9 10 ...
 ```
 
+There are 37 variables in this dataset, and only a small subset of those are needed for this analysis.  So, load the `dplyr` package in order to use its elegant selection and filtering capabilities.
 
 
 ```r
 suppressMessages(library(dplyr))
 library("dplyr")
 ```
-Describe how you came up with the excluded columns
 
-then use dplyr to select only columns of interest
+The goal of this assignment is to answer the following questions:
+
+1. Across the United States, which types of events (as indicated in the `EVTYPE` variable) are most harmful with respect to population health?
+2. Across the United States, which types of events have the greatest economic consequences?
+
+So, for the public health question, the **FATALITIES** and **INJURIES** columns would be of significance and for the economic question, the **PROPDMG**, **PROPDMGEXP**, **CROPDMG**, and **CROPDMGEXP** columns will contain useful information.  Naturally, the **EVTYPE** will be included, since it is the categorical value of primary concern.
 
 
 ```r
 stormData  <- stormData  %>% select(c(EVTYPE, FATALITIES, INJURIES, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP))
 ```
 
-Since we are interested in events that caused fatalities and injuries, let's filter out any that didn't cause any:
-This is what you want, them map this to the NWS STUFF
+There are 902297 rows in the original dataset and, again, not all of those are needed, since some cells may contain values not useful in the analysis.  Furthermore, we can massage the data into dataframes that are more focused on the questions we'd like to answer, so we can select from our first subset only those columns relevant to each of our two questions and put them in separate dataframes.  Finally, for the population health question, since we are interested in events that caused fatalities and injuries only, let's filter out ones that didn't cause any:
 
 
 ```r
@@ -89,7 +114,7 @@ populationData <-   stormData  %>%
                     filter(FATALITIES > 0.00 & INJURIES > 0.00)
 ```
 
-While we are at it, let's also create a data frame with information just about property and crop damage.
+Repeat the process, this time for the economic question.  We need only those columns related to property and crop damage; the exponent column is a multiplier which will come into play later on in the analysis.  For events that didn't cause any property or crop damage, exclude them:
 
 
 ```r
@@ -98,7 +123,7 @@ economicData <-   stormData  %>%
                   filter(PROPDMG > 0.00 & CROPDMG > 0.00)
 ```
 
-Can the datasets be reduced further?  Use summary to look at mean data for each group
+This leaves 2649 rows for the dataset used to answer the population question and 16242 rows to answer the economic question, a significant reduction from the 902297 rows of the original dataset.  But, can the datasets be reduced even further?  If we run `summary` against columns of interest in each dataset, we may get some guidance.
 
 
 ```r
@@ -119,6 +144,16 @@ summary(populationData$INJURIES)
 ##    1.00    2.00    5.00   29.82   20.00 1700.00
 ```
 
+Looking at these results, the significant values appear in the 3rd quartile.  Using that information, let's filter the population dataset down a bit more:
+
+
+```r
+populationData  <- populationData  %>% filter(FATALITIES >= 2 & INJURIES >= 20)
+```
+
+Appying the same approach to the economic data, we have the following summary information:
+
+
 ```r
 summary(economicData$PROPDMG)
 ```
@@ -137,16 +172,17 @@ summary(economicData$CROPDMG)
 ##    0.01    5.00   10.00   64.76   50.00  978.00
 ```
 
+Again, it appears that the dataset can be further reduced by using the values for the 3rd quartile, and so we apply that filter now:
 
 
 ```r
-populationData  <- populationData  %>% filter(FATALITIES >= 2 & INJURIES >= 20)
 economicData  <- economicData  %>% filter(PROPDMG >= 50 & CROPDMG >= 50)
 ```
 
+The next step in the processing is to reverse-map the 48 Event Types defined by the National Weather Service (NWS) to the entries in our datasets.  The complete list can be found in the link to the National Weather Service Storm Data Documentation given above.  Some of the existing `EVTYPE` values are 1::1 with the NWS types but for those which are not, the following process will normalize them.  First, for the population data:
 
+**Note**: This [link](http://forecast.weather.gov/glossary.php?word=tstm) will give the definition for **TSTM**, i.e., thunderstorm, as justification for changing any `EVTYPE` entries with that value to one of Thunderstorm.
 
-Now map names from the 48 Event Types defined by the NWS to our remaining data
 
 ```r
 cold  <- grepl("cold", populationData$EVTYPE, ignore.case = T)
@@ -183,47 +219,43 @@ spout  <- grepl("waterspout", populationData$EVTYPE, ignore.case = T)
 populationData$EVTYPE[spout]  <- "Waterspout"
 ```
 
-
-```r
-populationData$EVTYPE  <- toupper(trimws(populationData$EVTYPE))
-populationData$EVTYPE  <- as.factor(populationData$EVTYPE)
-```
-
-
-
-```r
-y <- populationData  %>% group_by(EVTYPE) %>% summarise(fatalities = sum(FATALITIES), injuries = sum(INJURIES))
-```
-
-
-
-```r
-plot(y$fatalities, type="l", col="blue", axes=F, ann=T, xlab="Event Types", ylab="Totals", cex.lab=0.8, lwd=2, ylim=c(0, 4000))
-axis(1, at=1:20, labels = F)
-axis(2, las=1, cex.axis=0.8)
- text(1:20, par("usr")[3] - 2, srt=45, adj=1, labels=y$EVTYPE, xpd=T, cex=0.6)
-lines(y$injuries, col="green", lwd=2)
-box()
-```
-
-![](./figures/plot_population-1.png) 
-
-You can plot fatalities/injuries
-you can plot two-panel across states
-
-x  <- storm.data %>% group_by(EVTYPE) %>% summarise(total_fatalities = sum(FATALITIES))
-x  <- storm.data %>% group_by(EVTYPE) %>% summarise(total_injuries = sum(INJURIES))
-
+Next, for the economic data:
 
 
 ```r
 dust  <- grepl("dust", economicData$EVTYPE, ignore.case = T)
 economicData$EVTYPE[dust] <- "Dust Storm"
 
+cold <- grepl("extreme cold", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[cold] <- "Extreme Cold/Wind Chill"
 
+flash <- grepl("flash", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[flash] <- "Flash Flood"
+
+FLOOD <- grepl("FL.*D", economicData$EVTYPE, ignore.case = F)
+economicData$EVTYPE[FLOOD] <- "Flood"
+
+freeze <- grepl("freeze", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[freeze] <- "Frost/Freeze"
+
+gust <- grepl("gusty", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[gust] <- "High Wind"
+
+hail <- grepl("hail", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[hail] <- "Hail"
+
+heat <- grepl("heat", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[heat] <- "Heat"
+
+storm <- grepl("typhoon", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[storm] <- "Tropical Storm"
+
+rain <- grepl("rain", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[rain] <- "Heavy Rain"
 
 hurricane <- grepl("hurricane", economicData$EVTYPE, ignore.case = T)
 economicData$EVTYPE[hurricane] <- "Hurricane (Typhoon)"
+
 thunder <- grepl("thu.*s.*", economicData$EVTYPE, ignore.case = T)
 economicData$EVTYPE[thunder] <- "Thunderstorm Wind"
 
@@ -233,130 +265,218 @@ economicData$EVTYPE[tstm] <- "Thunderstorm Wind"
 tropical <- grepl("tropical", economicData$EVTYPE, ignore.case = T)
 economicData$EVTYPE[tropical] <- "Tropical Storm"
 
-
 wildfire <- grepl("wildfire", economicData$EVTYPE, ignore.case = T)
 economicData$EVTYPE[wildfire] <- "Wildfire"
+
+forest <- grepl("forest", economicData$EVTYPE, ignore.case = T)
+economicData$EVTYPE[forest] <- "Wildfire"
 
 winter  <- grepl("winter", economicData$EVTYPE, ignore.case = T)
 economicData$EVTYPE[winter] <- "Winter Storm"
 ```
 
-
-# no data for this
-Astronomical Low Tide
-
-# data for this
-Avalanche
-Blizzard
-
-Coastal Flood
-coastal  <- grepl("coastal", stormData$EVTYPE, ignore.case = T)
-stormData$EVTYPE[coastal]  <- "COASTAL FLOOD"
-
-Cold/Wind Chill
-Debris Flow
-Dense Fog
-Dense Smoke
-Drought
-Dust Devil
-Dust Storm
-Excessive Heat
-
-# Combine records with extreme under this
-Extreme Cold/Wind Chill
-extreme  <- grepl("extreme", stormData$EVTYPE, ignore.case = T)
-stormData$EVTYPE[extreme]  <- "Extreme Cold/Wind Chill"
-
-
-Flash Flood
-Flood
-Frost/Freeze
-Funnel Cloud
-Freezing Fog
-Hail
-
-hail  <- grepl("hail", stormData$EVTYPE, ignore.case = T)
-stormData$EVTYPE[hail]  <- "HAIL"
-
-Heat
-Heavy Rain
-Heavy Snow
-High Surf
-High Wind
-
-Hurricane (Typhoon)
-Ice Storm
-Lake-Effect Snow
-Lakeshore Flood
-Lightning
-Marine Hail
-Marine High Wind
-Marine Strong Wind
-Marine Thunderstorm Wind
-Rip Current
-
-Seiche
-nothing to do
-
-Sleet
-Storm Surge/Tide
-Strong Wind
-
-This link will give the definition for TSTM, i.e., thunderstorm
-http://forecast.weather.gov/glossary.php?word=tstm
-
-Thunderstorm Wind
-thunder  <- grepl("thu.*s.*", stormData$EVTYPE, ignore.case = T)
-stormData$EVTYPE[thunder]  <- "THUNDERSTORM WIND"
-
-Tornado
-Tropical Depression
-Tropical Storm
-Tsunami
-Volcanic Ash
-Waterspout
-Wildfire
-Winter Storm
-Winter Weather
+A little more cleanup:  
+1. make the `EVTYPE` values all free of extraneous whitespace and in upper case
+2. make `EVTYPE` a factor variable now so its values can be used in later graphs
 
 
 ```r
-knitr::kable(head(mtcars), digits = 2, align = c(rep("l", 4), rep("c", 4), rep("r", 4)))
+populationData$EVTYPE  <- toupper(trimws(populationData$EVTYPE))
+populationData$EVTYPE  <- as.factor(populationData$EVTYPE)
+
+economicData$EVTYPE <- toupper(trimws(economicData$EVTYPE))
+economicData$EVTYPE  <- as.factor(economicData$EVTYPE)
 ```
 
-                    mpg    cyl   disp   hp     drat     wt     qsec     vs    am   gear   carb
-------------------  -----  ----  -----  ----  ------  ------  -------  ----  ---  -----  -----
-Mazda RX4           21.0   6     160    110    3.90    2.62    16.46    0      1      4      4
-Mazda RX4 Wag       21.0   6     160    110    3.90    2.88    17.02    0      1      4      4
-Datsun 710          22.8   4     108    93     3.85    2.32    18.61    1      1      4      1
-Hornet 4 Drive      21.4   6     258    110    3.08    3.21    19.44    1      0      3      1
-Hornet Sportabout   18.7   8     360    175    3.15    3.44    17.02    0      0      3      2
-Valiant             18.1   6     225    105    2.76    3.46    20.22    1      0      3      1
+As the final step in the cleanup, we need to examine the multiplier column for economic data.  The `PROPDMGEXP` and `CROPDMGEXP` can have a wide range of values ([see here](https://rstudio-pubs-static.s3.amazonaws.com/58957_37b6723ee52b455990e149edde45e5b6.html) for more information), many of which may have been already culled out as a result of the data-wrangling process.  Let's see what's left:
 
 
+```r
+unique(economicData$PROPDMGEXP)
+```
+
+```
+## [1] "K" "M"
+```
+
+```r
+unique(economicData$CROPDMGEXP)
+```
+
+```
+## [1] "K" "M" "0" "k"
+```
+
+So for the `PROPDMGEXP` we have just multipliers for thousands and millions of dollars; the `CROPDMGEXP` needs a bit more cleanup.  First, we'll remove the **0** multiplier, since it is not a contributor to the overall damage costs, then we'll normalize the **k** value to be consistent with the other `CROPDMGEXP` values.
 
 
-describes (in words and code) how the data were loaded into R and processed for analysis. In particular, your analysis must start from the raw CSV file containing the data. You cannot do any preprocessing outside the document. If preprocessing is time-consuming you may consider using the cache = TRUE option for certain code chunks.
+```r
+economicData <- economicData %>% filter(CROPDMGEXP != 0)
+economicData$CROPDMGEXP <- toupper(economicData$CROPDMGEXP)
+```
 
-Does the analysis include description and justification for any data transformations? 
-
-Your data analysis must address the following questions:
-
-    Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?
-
-    Across the United States, which types of events have the greatest economic consequences?
-
-Consider writing your report as if it were to be read by a government or municipal manager who might be responsible for preparing for severe weather events and will need to prioritize resources for different types of events. However, there is no need to make any specific recommendations in your report.
+Now we can start summarizing the data and arriving at some results.
 
 # Results
-in which your results are presented.
 
-You may have other sections in your analysis, but Data Processing and Results are required.
 
-The analysis document must have at least one figure containing a plot.
 
-Your analyis must have no more than three figures. Figures may have multiple plots in them (i.e. panel plots), but there cannot be more than three figures total.
+```r
+populationTotals <- populationData  %>% group_by(EVTYPE) %>% summarise(fatalities = sum(FATALITIES), injuries = sum(INJURIES))
+```
 
-Do the figure(s) have descriptive captions (i.e. there is a description near the figure of what is happening in the figure)?
 
-You must show all your code for the work in your analysis document. This may make the document a bit verbose, but that is okay. In general, you should ensure that echo = TRUE for every code chunk (this is the default setting in knitr).
+```r
+knitr::kable(populationTotals, digits = 2, align = c(rep("l", 4), rep("c", 4), rep("r", 4)))
+```
+
+
+
+EVTYPE                fatalities   injuries 
+--------------------  -----------  ---------
+BLIZZARD              12           630      
+COLD/WIND CHILL       8            179      
+DENSE FOG             12           176      
+DUST STORM            10           20       
+EXCESSIVE HEAT        309          4120     
+FLASH FLOOD           42           405      
+FLOOD                 27           2470     
+HEAT                  62           1375     
+HEAVY RAIN            2            21       
+HEAVY SNOW            2            20       
+HIGH WIND             18           104      
+HURRICANE (TYPHOON)   22           884      
+ICE STORM             3            50       
+THUNDERSTORM WIND     9            88       
+TORNADO               3692         48797    
+TROPICAL STORM        10           108      
+TSUNAMI               32           129      
+WATERSPOUT            3            39       
+WILDFIRE              25           301      
+WINTER STORM          10           275      
+
+Now show the plot for this data
+
+```r
+plot(populationTotals$fatalities, 
+     type="l", 
+     col="blue", 
+     axes=F, 
+     ann=T, 
+     xlab="", 
+     ylab="Totals", 
+     cex.lab=0.8, 
+     lwd=2, 
+     ylim=c(0, 5000))
+axis(1, 
+     at=1:20, 
+     labels = F)
+axis(2, 
+     las=1, 
+     cex.axis=0.8)
+text(1:20, 
+     par("usr")[3] - 2, 
+     srt=45, 
+     adj=1, 
+     labels=populationTotals$EVTYPE, 
+     xpd=T, 
+     cex=0.7)
+lines(populationTotals$injuries, 
+      col="green", 
+      lwd=2,
+      pch=22)
+legend("topright", 
+      c("fatalities","injuries"), 
+      cex=0.8, 
+      col=c("blue","green"), 
+      pch=21:22, 
+      lty=1:2)
+box()
+```
+
+![](./figures/plot_population-1.png) 
+
+
+```r
+economicData$PROPDMGCOST <- 
+  ifelse(economicData$PROPDMGEXP == "K", 
+         economicData$PROPDMG * 1.0e+03, 
+         economicData$PROPDMG * 1.0e+06)
+```
+
+
+```r
+economicData$CROPDMGCOST <- 
+  ifelse(economicData$CROPDMGEXP == "K", 
+         economicData$CROPDMG * 1.0e+03, 
+         economicData$CROPDMG * 1.0e+06)
+```
+
+We need only the `EVTYPE` and calculated columns now, so select only those:
+
+```r
+economicData <- economicData %>% select(c(EVTYPE, PROPDMGCOST, CROPDMGCOST))
+```
+
+
+```r
+economicCosts <- economicData %>% group_by(EVTYPE) %>% summarise(propertyCosts = sum(PROPDMGCOST), cropCosts = sum(CROPDMGCOST))
+```
+
+
+```r
+plot(economicCosts$propertyCosts, 
+     type="l", 
+     col="blue", 
+     axes=F, 
+     ann=T, 
+     xlab="", 
+     ylab="Totals", 
+     cex.lab=0.8, 
+     lwd=2)
+axis(1, 
+     at=1:20, 
+     labels = F)
+axis(2, 
+     las=1, 
+     cex.axis=0.8)
+text(1:20, 
+     par("usr")[3] - 2, 
+     srt=45, 
+     adj=1, 
+     labels=economicCosts$EVTYPE, 
+     xpd=T, 
+     cex=0.7)
+box()
+```
+
+![](./figures/plot_property_costs-1.png) 
+
+
+```r
+plot(economicCosts$cropCosts, 
+     type="l", 
+     col="blue", 
+     axes=F, 
+     ann=T, 
+     xlab="", 
+     ylab="Totals", 
+     cex.lab=0.8, 
+     lwd=2)
+axis(1, 
+     at=1:20, 
+     labels = F)
+axis(2, 
+     las=1, 
+     cex.axis=0.8)
+text(1:20, 
+     par("usr")[3] - 2, 
+     srt=45, 
+     adj=1, 
+     labels=economicCosts$EVTYPE, 
+     xpd=T, 
+     cex=0.7)
+box()
+```
+
+![](./figures/plot_crop_costs-1.png) 
