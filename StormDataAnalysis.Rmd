@@ -1,6 +1,5 @@
 ---
 title: "Reproducible Research - Peer Assessment 2"
-author: "Kevin E. D'Elia"
 date: "09/18/2015"
 output: 
   html_document:
@@ -15,15 +14,26 @@ knitr::opts_chunk$set(echo = TRUE)
 # Analysis of NOAA Storm Database
 Access, data-wrangle, and provide data visualization of key variables contained in the NOAA Storm Database.
 
-
 # Synopsis of Analysis
-The basic goal of this assignment is to explore the NOAA Storm Database and answer some basic questions about severe weather events. [NEED MORE WORDS HERE!!!]
+The basic goal of this assignment is to explore the NOAA Storm Database and answer some basic questions about severe weather events.  The questions are the following:
 
+1. Across the United States, which types of events (as indicated in the `EVTYPE` variable) are most harmful with respect to population health?
+2. Across the United States, which types of events have the greatest economic consequences?
+
+The approach used in the analysis of this dataset is:
+
+1. Obtain the data from the National Weather Service (NWS) website
+2. Massage/data-wrangle the dataset into dataframes which provide a focused set of data elements necessary to answer the questions
+3. Perform summary calculations on the reduced datasets
+4. Plot the data against all known event types
+5. Provide interpretation of the results
+6. Summarize the findings
+
+# Abstract
 Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. Many severe events can result in fatalities, injuries, and property damage, and preventing such outcomes to the extent possible is a key concern.
 
 This project involves exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database tracks characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage.
 Data
-
 
 # Data Processing
 
@@ -57,12 +67,8 @@ suppressMessages(library(dplyr))
 library("dplyr")
 ```
 
-The goal of this assignment is to answer the following questions:
 
-1. Across the United States, which types of events (as indicated in the `EVTYPE` variable) are most harmful with respect to population health?
-2. Across the United States, which types of events have the greatest economic consequences?
-
-So, for the public health question, the **FATALITIES** and **INJURIES** columns would be of significance and for the economic question, the **PROPDMG**, **PROPDMGEXP**, **CROPDMG**, and **CROPDMGEXP** columns will contain useful information.  Naturally, the **EVTYPE** will be included, since it is the categorical value of primary concern.
+For the public health question, the **FATALITIES** and **INJURIES** columns would be of significance and for the economic question, the **PROPDMG**, **PROPDMGEXP**, **CROPDMG**, and **CROPDMGEXP** columns will contain useful information.  Naturally, the **EVTYPE** column will be included, since it is the categorical variable against which our other data points will be measured.
 
 ```{r select_columns}
 stormData  <- stormData  %>% select(c(EVTYPE, FATALITIES, INJURIES, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP))
@@ -110,7 +116,8 @@ Again, it appears that the dataset can be further reduced by using the values fo
 economicData  <- economicData  %>% filter(PROPDMG >= 50 & CROPDMG >= 50)
 ```
 
-The next step in the processing is to reverse-map the 48 Event Types defined by the National Weather Service (NWS) to the entries in our datasets.  The complete list can be found in the link to the National Weather Service Storm Data Documentation given above and is reproduced here for completeness.  
+The next step in the processing is to reverse-map the 48 Event Types defined by the NWS to the entries in our datasets.  The complete list can be found in the link to the NWS Storm Data Documentation given above and is reproduced here for completeness.  
+
 
 Event Type            | Event Type             | Event Type              | Event Type
 ----------------------|------------------------|-------------------------|-----------
@@ -127,7 +134,7 @@ Dust Devil            |Heavy Snow              |Rip Current              |Wildfi
 Dust Storm            |High Surf               |Seiche                   |Winter Storm
 Excessive Heat        |High Wind               |Sleet                    |Winter Weather
 
-Some of the existing `EVTYPE` values are 1::1 with the NWS types but for those which are not, the following process will normalize them.  First, for the population data:
+Some of the `EVTYPE` values found in our dataset are 1::1 with the NWS types but for those which are not, the following process will normalize them.  First, for the population data:
 
 **Note**: This [link](http://forecast.weather.gov/glossary.php?word=tstm) will give the definition for **TSTM**, i.e., thunderstorm, as justification for changing any `EVTYPE` entries with that value to one of Thunderstorm.
 
@@ -401,3 +408,15 @@ box()
 -----------------------------------
 
 The results are similar, except that the order changed for the second and third most damaging events.  Once again, **Floods** cost the most, although around $1B less than this event did for property damage.  **Hurricane (Typhoon)** was the second leading contributor to crop damage, at around $1.3B, and **Tropical Storm** landed in the third position, in the hundreds of millions of dollars.
+
+# Summary
+
+To summarize, then, let's combine our original questions with our findings as a result of our analysis.
+
+**Q1**. Across the United States, which types of events (as indicated in the `EVTYPE` variable) are most harmful with respect to population health?
+
+**A1**. It was determined that the events which caused the most fatalities and injuries were, in order of decreasing impact, tornadoes, excessive heat, and flooding.
+
+**Q2**. Across the United States, which types of events have the greatest economic consequences?
+
+**A2**. With respect to property damage costs, it was determined that floods, tropical storms, and hurricanes/typhoons had the most impact, while for crop damage costs, floods, hurricanes/typhoons, and tropical storms were the most significant events.
