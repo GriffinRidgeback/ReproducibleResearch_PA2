@@ -260,7 +260,7 @@ populationTotals <- populationData %>%
                     summarise(fatalities = sum(FATALITIES), injuries = sum(INJURIES))
 ```
 
-Now show the plot for this data:
+Plotting both fatalities and injuries across all `EVTYPE` values will provide a clear picture of which `EVTYPE` had the most impact on human life.
 
 ```{r plot_population, fig.path="./figures/", fig.cap="Figure 1: Summary of fatalities and injuries by Event Type", results="asis", fig.width=12}
 plot(populationTotals$fatalities, 
@@ -299,11 +299,11 @@ legend("topright",
 box()
 ```
 
-******
+-----------------------------------
 
-From the table and the graphic, it is clear that Tornadoes are the primary cause of fatalities and injuries, followed by Excessive Heat, respectively.
+From this graphic, it is overwhelmingly clear that **tornadoes** claimed more lives and caused more injuries than any other severe weather event, followed by **excessive heat** and **floods**.
 
-Now we examine the question of which event cost the most in terms of property and crop damage.  To do that, we use the multiplier associated with each indicator.  For property, we do this:
+Now we examine the question of which event cost the most in terms of property and crop damage.  To do that, we use the multiplier (found in the variables *PROPDMGEXP* and *CROPDMGEXP*) associated with each indicator.  Because of previous data-wrangling, at this point we know that we have multipliers for thousands and millions of dollars.  That enables us to use the following code to calculate property damage costs for each observation, added as a new column to our dataset:
 
 ```{r calculate_property_damage_costs}
 economicData$PROPDMGCOST <- 
@@ -312,7 +312,7 @@ economicData$PROPDMGCOST <-
          economicData$PROPDMG * 1.0e+06)
 ```
 
-For crop damage, we calculate it this way:
+Crop damage costs are calculated similarly:
 
 ```{r calculate_crop_damage_costs}
 economicData$CROPDMGCOST <- 
@@ -321,17 +321,22 @@ economicData$CROPDMGCOST <-
          economicData$CROPDMG * 1.0e+06)
 ```
 
-We need only the `EVTYPE` and calculated columns now, so select only those:
+A bit more (minor) cleanup:  we need only the `EVTYPE` and calculated columns now, so select only those:
+
 ```{r clean_up}
 economicData <- economicData %>% 
                 select(c(EVTYPE, PROPDMGCOST, CROPDMGCOST))
 ```
+
+The dataset is now in a reduced format, ready for summing.  A new dataset is created, grouped by `EVTYPE` and with columns for total property and crop damage costs:
 
 ```{r summarize_economic_data}
 economicCosts <-  economicData %>% 
                   group_by(EVTYPE) %>% 
                   summarise(propertyCosts = sum(PROPDMGCOST), cropCosts = sum(CROPDMGCOST))
 ```
+
+Plotting the total property costs data will give the following graphic:
 
 ```{r plot_property_costs, fig.path="./figures/", fig.cap="Figure 2: Property Damage Costs by Event Type", results="asis", fig.width=12}
 plot(economicCosts$propertyCosts, 
@@ -360,6 +365,12 @@ points(economicCosts$propertyCosts, pch=18)
 box()
 ```
 
+-----------------------------------
+
+Here, the major contributor to property damage is **Floods**, at about $2.5B US Dollars.  That greatly exceeds the two nearest events, **Tropical Storms**, at $1.5B, and **Hurricane (Typhoon)**, at approximately $1.3B.
+
+Taking a look at crop damage costs:
+
 ```{r plot_crop_costs, fig.path="./figures/", fig.cap="Figure 3: Crop Damage Costs by Event Type", results="asis", fig.width=12}
 plot(economicCosts$cropCosts, 
      type="l", 
@@ -386,3 +397,7 @@ text(1:nrow(economicCosts),
 points(economicCosts$cropCosts, pch=18)
 box()
 ```
+
+-----------------------------------
+
+The results are similar, except that the order changed for the second and third most damaging events.  Once again, **Floods** cost the most, although around $1B less than this event did for property damage.  **Hurricane (Typhoon)** was the second leading contributor to crop damage, at around $1.3B, and **Tropical Storm** landed in the third position, in the hundreds of millions of dollars.
